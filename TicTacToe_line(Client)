@@ -1,0 +1,364 @@
+#include "pch.h"
+#pragma comment(lib, "ws2_32.lib")
+#include <winsock2.h>
+#include <iostream>
+#include <cstdlib>
+#include <string>
+#include <stdlib.h>
+#pragma warning(disable: 4996)
+
+using namespace std;
+
+const int N = 3;  // размерность игрового поля
+
+int tic_tac_toe[N][N]; // игровое поле
+
+int xROW;
+int yCOL;
+
+bool game_over = true;
+
+string Input()
+{
+	int indicatorOfwriting = 0;
+	string cor;
+	do {
+		do {
+			cout << "Введите координату: " << endl;
+			cin >> cor;
+		} while (cor[0] > 57 || cor[0] < 49);
+
+
+		switch (stoi(cor)) {
+		case 1:
+			cor = "00";
+			xROW = 0;
+			yCOL = 0;
+			if (tic_tac_toe[0][0] == -1) {
+				tic_tac_toe[0][0] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		case 2:
+			cor = "01";
+			xROW = 0;
+			yCOL = 1;
+			if (tic_tac_toe[0][1] == -1) {
+				tic_tac_toe[0][1] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		case 3:
+			cor = "02";
+			xROW = 0;
+			yCOL = 2;
+			if (tic_tac_toe[0][2] == -1) {
+				tic_tac_toe[0][2] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		case 4:
+			cor = "10";
+			xROW = 1;
+			yCOL = 0;
+			if (tic_tac_toe[1][0] == -1) {
+				tic_tac_toe[1][0] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		case 5:
+			cor = "11";
+			xROW = 1;
+			yCOL = 1;
+			if (tic_tac_toe[1][1] == -1) {
+				tic_tac_toe[1][1] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		case 6:
+			cor = "12";
+			xROW = 1;
+			yCOL = 2;
+			if (tic_tac_toe[1][2] == -1) {
+				tic_tac_toe[1][2] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		case 7:
+			cor = "20";
+			xROW = 2;
+			yCOL = 0;
+			if (tic_tac_toe[2][0] == -1) {
+				tic_tac_toe[2][0] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		case 8:
+			cor = "21";
+			xROW = 2;
+			yCOL = 1;
+			if (tic_tac_toe[2][1] == -1) {
+				tic_tac_toe[2][1] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		case 9:
+			cor = "22";
+			xROW = 2;
+			yCOL = 2;
+			if (tic_tac_toe[2][2] == -1) {
+				tic_tac_toe[2][2] = 2;
+				indicatorOfwriting = 1;
+			}
+			break;
+		default:
+			break;
+		}
+	} while (indicatorOfwriting != 1);
+
+	return cor;
+}
+
+
+// прорисовка верхней границы
+void DrawTop() {
+
+	cout << char(218);
+	for (int i = 1; i < N; i++) {
+		cout << char(196) << char(196) << char(196) << char(194);
+	}
+	cout << char(196) << char(196) << char(196) << char(191);
+}
+
+// прорисовка нижней границы
+void DrawBottom() {
+	// нижняя граница
+	cout << char(192);
+	for (int i = 1; i < N; i++) {
+		cout << char(196) << char(196) << char(196) << char(193);
+	}
+	cout << char(196) << char(196) << char(196) << char(217);
+}
+
+// прорисовка перемычки
+void DrawJumper() {
+	cout << char(195);
+	for (int i = 1; i < N; i++) {
+		cout << char(196) << char(196) << char(196) << char(197);
+	}
+	cout << char(196) << char(196) << char(196) << char(180);
+}
+
+//прорисовка одного квадрата
+void DrawSquare(int x, int y) {
+	switch (tic_tac_toe[x][y]) {
+	case -1: cout << "   "; break;
+	case 1: cout << " X "; break;
+	case 2: cout << " O "; break;
+	}
+	cout << char(179);
+}
+
+// прорисовка игрового поля
+void DrawPlayngField() {
+	// рисуем верхнюю границу
+	DrawTop();
+	cout << "\n\t";
+
+	// поле с ходами игроков
+	for (int i = 0; i < N; i++) {
+		// рисуем ячейку с номером строки
+		cout << char(179); // << " " << i << " " << char(179);
+		// рисуем ячейку игрового поля
+		for (int j = 0; j < N; j++) DrawSquare(i, j);
+		cout << "\n\t";
+		if (i != N - 1) { // если это не последняя строка
+			// рисуем перемычку
+			DrawJumper();
+			cout << "\n\t";
+		}
+	}
+
+	// рисуем нижнюю границу
+	DrawBottom();
+	cout << "\n\t";
+}
+
+// проверка выигрыша игрока
+bool Check_Gamer_win(int x1, int y1,  // координаты последнего хода
+	int win_sum,  // сумма для определения выигрыша
+	int gamer_digit) // цифра игрока в игровом массиве
+{
+	int sum = 0;
+	bool win1 = false;
+	// проверяем горизонталь
+	for (int i = 0; i < N; i++)
+		if (tic_tac_toe[x1][i] == gamer_digit)
+			sum += tic_tac_toe[x1][i];
+	if (sum == win_sum) win1 = true;
+	if (!win1) { // если по горизонтали не выиграли 
+		//проверяем вертикаль
+		sum = 0;
+		for (int i = 0; i < N; i++)
+			if (tic_tac_toe[i][y1] == gamer_digit)
+				sum += tic_tac_toe[i][y1];
+		if (sum == win_sum) win1 = true;
+		if (!win1) {// если не выиграли ни по горизонтали, 
+					//ни по вертикали
+			//проверяем первую диагональ
+			if (!win1) {
+				sum = 0;
+				if (x1 == y1)
+					for (int i = 0; i < N; i++)
+						if (tic_tac_toe[i][i] == gamer_digit)
+							sum += tic_tac_toe[i][i];
+				if (sum == win_sum) win1 = true;
+				if (!win1) { // если все еще не выиграли
+					//  проверяем вторую диагональ
+					sum = 0;
+					if (x1 + y1 == N - 1)
+						for (int i = 0; i < N; i++)
+							if (tic_tac_toe[i][N - 1 - i] == gamer_digit)
+								sum += tic_tac_toe[i][N - 1 - i];
+					if (sum == win_sum) win1 = true;
+				}
+			}
+		}
+	}
+	return win1;
+}
+
+
+SOCKET Connection;
+
+
+void GetCoordinat(string massage) {
+	xROW = massage[0] - 48;
+	yCOL = massage[1] - 48;
+}
+
+void ClientHandler() {
+	int msg_size;
+
+	recv(Connection, (char*)&msg_size, sizeof(int), NULL);
+	char *msg = new char[msg_size + 1];
+	msg[msg_size] = '\0';
+	recv(Connection, msg, msg_size, NULL);
+	cout << msg << endl;
+	GetCoordinat(msg);
+	delete[] msg;
+
+}
+
+int main(int argc, char* argv[]) {
+	//WSAStartup
+	WSAData wsaData;
+	WORD DLLVersion = MAKEWORD(2, 1);
+	if (WSAStartup(DLLVersion, &wsaData) != 0) {
+		cout << "Error" << endl;
+		exit(1);
+	}
+
+	SOCKADDR_IN addr;
+	int sizeofaddr = sizeof(addr);
+	addr.sin_addr.s_addr = inet_addr("192.168.1.33");
+	addr.sin_port = htons(1111);
+	addr.sin_family = AF_INET;
+
+	cout << "\tИгрок 2 (cline)" << endl;
+
+	Connection = socket(AF_INET, SOCK_STREAM, NULL);
+	if (connect(Connection, (SOCKADDR*)&addr, sizeof(addr)) != 0) {
+		cout << "Error: failed connect to server.\n";
+		return 1;
+	}
+	cout << "Connected!\n";
+	
+	//CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)ClientHandler, NULL, NULL, NULL);
+	string msg1;
+
+
+	while (true)
+	{
+
+
+		// начальное заполнение поля
+		for (int i = 0; i < N; i++)
+			for (int j = 0; j < N; j++)	tic_tac_toe[i][j] = -1;
+		// прорисовка игрового поля
+		system("chcp 866");
+		cout << "\n\t";
+		DrawPlayngField();
+
+		do {  // играем
+			system("chcp 1251");
+			do { // запрашиваем координаты игрока 1,
+				 //пока не будет указана свободная ячейка
+				
+				ClientHandler();
+				xROW;
+				yCOL;
+
+				
+			} while (tic_tac_toe[xROW][yCOL] != -1); // проверка занятости ячейки
+
+			tic_tac_toe[xROW][yCOL] = 1; // запись хода игрока 1
+
+			// перерисовка игрового поля после хода игрока 1
+			system("chcp 866");
+			system("cls");
+			cout << "\n\t";
+			DrawPlayngField();
+
+			if (!Check_Gamer_win(xROW, yCOL, N, 1)) { // если игрок 1 еще не выиграл
+				// проверка возможности нового хода
+				game_over = true;
+				for (int i = 0; i < N; i++)
+					for (int j = 0; j < N; j++)
+						if (tic_tac_toe[i][j] == -1) {
+							game_over = false;
+							break;
+						}
+				if (!game_over) { // если есть возможность нового хода
+					system("chcp 1251");
+
+
+					msg1 = Input();
+
+					//getline(cin, msg1);
+					int msg_size = msg1.size();
+					send(Connection, (char*)&msg_size, sizeof(int), NULL);
+					send(Connection, msg1.c_str(), msg_size, NULL);
+					Sleep(10);
+
+					// перерисовка игрового поля после хода игрока 2
+
+					
+					//setlocale(LC_ALL, "Unicode");
+					system("chcp 866");
+					system("cls");
+					cout << "\n\t";
+					DrawPlayngField();
+
+					// проверяем выигрыш игрока 2
+					if (Check_Gamer_win(xROW, yCOL, N * 2, 2)) {
+						system("chcp 1251");
+						cout << "\n\t Выиграл игрок 2!!!";
+						//cout << "\n\t Gamer 2 win!!!";
+						game_over = true;
+					}
+				}
+			}
+			else {
+				system("chcp 1251");
+				cout << "\n\t Выиграл игрок 1!!!";
+				//cout << "\n\t Gamer 1 win!!!";
+				game_over = true;
+			}
+		} while (!game_over);
+		cout << "\n\t";
+	}
+	
+	system("pause");
+	return 0;
+}
